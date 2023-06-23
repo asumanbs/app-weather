@@ -9,9 +9,10 @@ import com.example.weather.model.WeatherEntity;
 import com.example.weather.repository.WeatherRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,12 +26,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import java.util.logging.Logger;
+
 
 @Service
 @CacheConfig(cacheNames = {"weathers"})
 public class WeatherService {
-   // Logger logger = LoggerFactory.getLogger(WeatherService.class);
+    private static final Logger logger = LoggerFactory.getLogger(WeatherService.class);
     private static final String API_URL = "http://api.weatherstack.com/current?access_key=4d5b5c43297c222d1e3caa514a625380&query=";
     private final WeatherRepository weatherRepository;
     private final RestTemplate restTemplate;
@@ -50,16 +51,17 @@ public class WeatherService {
         Optional<WeatherEntity> weatherEntityOptional =weatherRepository.findFirstByRequestedCityNameOrderByUpdatedTimeDesc(city);
         return weatherEntityOptional.map(weather -> {
             if (weather.getUpdatedTime().isBefore(getLocalDateTimeNow().minusMinutes(5))) {
-
+                logger.info(String.format("Creating a new city weather from weather stack api for %s due to the current one is not up-to-date", city));
                 return createCityWeather(city);
             }
-
+            logger.info(String.format("Getting weather from database for %s due to it is already up-to-date", city));
             return WeatherDto.convert(weather);
         }).orElseGet(() -> createCityWeather(city));
     }
     public WeatherDto createCityWeather(String city) {
-
-        ResponseEntity<String> responseEntity = restTemplate.getForEntity(getWeatherStackUrl(city), String.class);
+        logger.info("Requesting weather stack api for city: " + city);
+        String url = getWeatherStackUrl(city);
+        ResponseEntity<String> responseEntity = restTemplate.getForEntity(url, String.class);
 
         try {
             WeatherResponse weatherResponse = objectMapper.readValue(responseEntity.getBody(), WeatherResponse.class);
@@ -77,7 +79,7 @@ public class WeatherService {
     @PostConstruct
     @Scheduled(fixedRateString = "10000")
     public void clearCache(){
-        //logger.info("Caches are cleared");
+        logger.info("Caches are cleared");
     }
 private String getWeatherStackUrl(String city){
         return Constants.API_URL + Constants.ACCESS_KEY_PARAM + Constants.API_KEY + Constants.QUERY_KEY_PARAM + city;
