@@ -37,6 +37,7 @@ services:
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       volumes:
         - ./pub-technology/kafka1/data:/var/lib/kafka/data
+
   manager:
       image: sheepkiller/kafka-manager
       ports:
@@ -45,5 +46,14 @@ services:
         ZK_HOSTS: zookeeper:2181
       depends_on:
         - zookeeper
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - "9090:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=localhost:2181
 
 
