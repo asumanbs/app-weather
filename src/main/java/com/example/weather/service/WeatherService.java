@@ -77,9 +77,8 @@ public class WeatherService {
     }
     @CacheEvict(allEntries = true)
     @PostConstruct
-    @Scheduled(fixedRateString = "10000")
+    @Scheduled(fixedRateString = "${weather-stack.cache-ttl}")
     public void clearCache(){
-        logger.info("Caches are cleared");
     }
 private String getWeatherStackUrl(String city){
         return Constants.API_URL + Constants.ACCESS_KEY_PARAM + Constants.API_KEY + Constants.QUERY_KEY_PARAM + city;
@@ -100,10 +99,9 @@ private String getWeatherStackUrl(String city){
                 response.location().name(),
                 response.location().country(),
                 response.current().temperature(),
-                LocalDateTime.now(),
+                getLocalDateTimeNow(),
                 LocalDateTime.parse(response.location().localtime(), formatter)
               );
-
         return weatherRepository.save(weatherEntity);
     }
     private LocalDateTime getLocalDateTimeNow() {

@@ -1,8 +1,10 @@
 package com.example.weather;
 
+import com.example.weather.kafka.Publisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
@@ -30,6 +32,13 @@ public class WeatherApplication {
 	@Bean
 	public Clock clock() {
 		return Clock.systemDefaultZone();
+	}
+	@Bean
+	public ApplicationRunner runner(Publisher p){
+		return args -> {
+			p.sendMessage("Hellooooo KAFKAAAA");
+		};
+
 	}
 
 }
